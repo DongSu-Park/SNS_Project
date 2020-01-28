@@ -46,12 +46,6 @@ public class Password_ResetActivity extends AppCompatActivity {
         }
     };
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-    }
-
     private void send_password_reset() {
         String email = ((EditText) findViewById(R.id.reset_email)).getText().toString();
 
