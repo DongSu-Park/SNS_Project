@@ -1,17 +1,24 @@
 package com.floreerin.sns_project;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserInfo;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,23 +29,34 @@ public class MainActivity extends AppCompatActivity {
 
         if(user == null){
             // 현재 로그인이 안되어 있을 경우
-            gotoLogin();
+            gotoLogin(); // 로그인 페이지로 이동
         } else {
             // 로그인 되어있을 때
-            for (UserInfo profile : user.getProviderData()) {
-                // Name, email address, and profile photo Url
-                String name = profile.getDisplayName();
-                if (name != null){
-                    if (name.length() == 0) { // 회원정보를 파이어베이스에서 가져왔을 때 name 값이 없을 경우 회원 정보 수정 페이지로 이동
-                        Toast.makeText(this, "회원 정보를 입력 해주세요", Toast.LENGTH_LONG).show();
-                        Intent intent = new Intent(this, MemberInitActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 호출한 MainActivity를 맨위의 스택으로 올리고 나머지 존재했던 액티비티는 모두 삭제
-                        startActivity(intent);
-                        finish();
+            FirebaseFirestore db = FirebaseFirestore.getInstance(); // Cloud Firestore (NoSQL) 초기화
+
+            DocumentReference docRef = db.collection("users").document(user.getUid()); // 해당 회원 정보의 Uid를 가져옴
+
+            docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() { // 해당 회원 Uid의 회원 정보 db 가져옴
+                @Override
+                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+
+                        if (document != null){
+                            if (document.exists()) {
+                                Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+
+                            } else {
+                                Log.d(TAG, "No such document");
+                                startToast("회원 정보를 입력 해주세요");
+                                gotoMemberInit(); // 회원 정보를 입력하는 엑티비티 이동
+                            }
+                        }
+                    } else {
+                        Log.d(TAG, "get failed with ", task.getException());
                     }
                 }
-
-            }
+            });
         }
 
         findViewById(R.id.btn_logout).setOnClickListener(onClickListener);
@@ -67,5 +85,15 @@ public class MainActivity extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 호출한 MainActivity를 맨위의 스택으로 올리고 나머지 존재했던 액티비티는 모두 삭제
         startActivity(intent);
         finish();
+    }
+
+    private void gotoMemberInit(){
+        Intent intent = new Intent(this, MemberInitActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 호출한 MainActivity를 맨위의 스택으로 올리고 나머지 존재했던 액티비티는 모두 삭제
+        startActivity(intent);
+    }
+
+    private void startToast(String msg){
+        Toast.makeText(this, msg ,Toast.LENGTH_LONG).show();
     }
 }

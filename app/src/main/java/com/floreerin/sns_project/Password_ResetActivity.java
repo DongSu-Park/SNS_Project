@@ -62,7 +62,7 @@ public class Password_ResetActivity extends AppCompatActivity {
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
                                 startToast("이메일로 비밀번호 재설정 메세지를 보냈습니다.");
-                                gotoLogin();
+                                finish();
                             }
                         }
                     });
@@ -75,10 +75,4 @@ public class Password_ResetActivity extends AppCompatActivity {
         Toast.makeText(this, msg ,Toast.LENGTH_LONG).show();
     }
 
-    private void gotoLogin(){
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 호출한 MainActivity를 맨위의 스택으로 올리고 나머지 존재했던 액티비티는 모두 삭제
-        startActivity(intent);
-        finish();
-    }
 }

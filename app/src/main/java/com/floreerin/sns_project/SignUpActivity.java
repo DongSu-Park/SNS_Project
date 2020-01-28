@@ -62,7 +62,7 @@ public class SignUpActivity extends AppCompatActivity {
                                     // Sign in success, update UI with the signed-in user's information
                                     FirebaseUser user = mAuth.getCurrentUser();
                                     startToast("회원가입을 성공했습니다.");
-                                    gotoLogin(); // 회원가입 성공 후 로그인 페이지로 이동
+                                    finish(); // 회원가입 성공 후 로그인 페이지로 이동
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     if(task.getException() != null) {
@@ -83,10 +83,4 @@ public class SignUpActivity extends AppCompatActivity {
         Toast.makeText(this, msg ,Toast.LENGTH_LONG).show();
     }
 
-    private void gotoLogin(){
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 호출한 MainActivity를 맨위의 스택으로 올리고 나머지 존재했던 액티비티는 모두 삭제
-        startActivity(intent);
-        finish();
-    }
 }
