@@ -54,9 +54,7 @@ public class MemberInitActivity extends AppCompatActivity {
 
         if(name.length() > 0 && phone.length() > 9 && date.length() > 5 && address.length() > 0)  { // 입력 칸 확인 로직 후 메소드 실행
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
             FirebaseFirestore db = FirebaseFirestore.getInstance(); // Cloud Firestore (NoSQL) 초기화
-
             MemberInfo memberInfo = new MemberInfo(name,phone,date,address);
             if (user != null){
                 db.collection("users").document(user.getUid()).set(memberInfo)
