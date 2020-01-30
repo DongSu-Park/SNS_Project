@@ -31,7 +31,6 @@ public class MainActivity extends AppCompatActivity {
             // 현재 로그인이 안되어 있을 경우
             gotoLogin(); // 로그인 페이지로 이동
         } else {
-            gotoCamera();
             // 로그인 되어있을 때
             FirebaseFirestore db = FirebaseFirestore.getInstance(); // Cloud Firestore (NoSQL) 초기
             DocumentReference docRef = db.collection("users").document(user.getUid()); // 해당 회원 정보의 Uid를 가져옴
@@ -61,10 +60,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_logout).setOnClickListener(onClickListener);
     }
 
-    private void gotoCamera() {
-        Intent intent = new Intent(this, CameraActivity.class);
-        startActivity(intent);
-    }
 
     @Override
     public void onBackPressed() {

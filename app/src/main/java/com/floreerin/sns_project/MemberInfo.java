@@ -5,12 +5,14 @@ public class MemberInfo { // 커스텀 객체 생성
     private String phone;
     private String date;
     private String address;
+    private String photoUrl;
 
-    public MemberInfo(String name, String phone, String date, String address) {
+    public MemberInfo(String name, String phone, String date, String address, String photoUrl) {
         this.name = name;
         this.phone = phone;
         this.date = date;
         this.address = address;
+        this.photoUrl = photoUrl;
     }
 
     public String getName() {
@@ -43,5 +45,13 @@ public class MemberInfo { // 커스텀 객체 생성
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 }
