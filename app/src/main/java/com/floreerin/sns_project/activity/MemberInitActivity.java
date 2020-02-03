@@ -1,14 +1,12 @@
-package com.floreerin.sns_project;
+package com.floreerin.sns_project.activity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageDecoder;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -18,7 +16,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
+import com.floreerin.sns_project.MemberInfo;
+import com.floreerin.sns_project.R;
+import com.floreerin.sns_project.activity.CameraActivity;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -37,11 +39,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-
 public class MemberInitActivity extends AppCompatActivity {
     private static final String TAG = "MemberInitActivity";
     private ImageView profileImageView;
     private String returnPath;
+    private FirebaseUser user;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -52,7 +54,36 @@ public class MemberInitActivity extends AppCompatActivity {
         profileImageView.setOnClickListener(onClickListener);
 
         findViewById(R.id.btn_check).setOnClickListener(onClickListener);
+        findViewById(R.id.btn_camera).setOnClickListener(onClickListener);
+        findViewById(R.id.btn_gallery).setOnClickListener(onClickListener);
     }
+
+    View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.btn_check:
+                    changeMemberInit();
+                    break;
+                case R.id.profileImageView:
+                    CardView cardView = findViewById(R.id.cardview_showbtn);
+                    if (cardView.getVisibility() == View.VISIBLE){
+                        cardView.setVisibility(View.GONE);
+                    }else{
+                        cardView.setVisibility(View.VISIBLE);
+                    }
+                    break;
+                case R.id.btn_camera:
+                    gotoCamera();
+                    break;
+                case R.id.btn_gallery:
+                    gotoGallery();
+                    break;
+            }
+        }
+    };
+
+
 
     @Override
     public void onBackPressed() { // 뒤로가기 버튼 누를 시
@@ -93,21 +124,7 @@ public class MemberInitActivity extends AppCompatActivity {
         }
     }
 
-    View.OnClickListener onClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.btn_check:
-                    changeMemberInit();
-                    break;
-                case R.id.profileImageView:
-                    gotoCamera();
-                    break;
-            }
-        }
-    };
-
-    private void changeMemberInit() {
+    private void changeMemberInit() { // 프로필 정보를 Firebase DB에 저장하는 메소드
         final String name = ((EditText) findViewById(R.id.member_name)).getText().toString();
         final String phone = ((EditText) findViewById(R.id.member_phone)).getText().toString();
         final String date = ((EditText) findViewById(R.id.member_date)).getText().toString();
@@ -115,67 +132,79 @@ public class MemberInitActivity extends AppCompatActivity {
 
         if (name.length() > 0 && phone.length() > 9 && date.length() > 5 && address.length() > 0) { // 입력 칸 확인 로직 후 메소드 실행
             final FirebaseStorage storage = FirebaseStorage.getInstance();
-            final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             StorageReference storageRef = storage.getReference();
 
+            user = FirebaseAuth.getInstance().getCurrentUser();
             final StorageReference mountainImagesRef = storageRef.child("images/" + user.getUid() + "/profileImage.jpg"); // 사용자 uid값을 통한 스토리지 저장
 
-            try {
-                InputStream stream = new FileInputStream(new File(returnPath));
+            if (returnPath == null){ // 프로필 사진이 없을 경우 정보만 보냄
+                MemberInfo memberInfo = new MemberInfo(name, phone, date, address);
+                firebaseUploader(memberInfo);
 
-                UploadTask uploadTask = mountainImagesRef.putStream(stream);
-
-                uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                    @Override
-                    public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                        if (!task.isSuccessful()) {
-                            throw task.getException();
-                        }
-                        return mountainImagesRef.getDownloadUrl();
-                    }
-                }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if (task.isSuccessful()) {
-                            Uri downloadUri = task.getResult();
-                            Log.e("성공", "성공" + downloadUri);
-
-                            FirebaseFirestore db = FirebaseFirestore.getInstance(); // Cloud Firestore (NoSQL) 초기화
-                            MemberInfo memberInfo = new MemberInfo(name, phone, date, address, downloadUri.toString());
-                            if (user != null) {
-                                db.collection("users").document(user.getUid()).set(memberInfo)
-                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void aVoid) {
-                                                startToast("회원정보 등록을 성공하였습니다.");
-                                                Log.d(TAG, "DocumentSnapshot successfully written!");
-                                                finish();
-                                            }
-                                        })
-                                        .addOnFailureListener(new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception e) {
-                                                startToast("회원정보 등록에 실패하였습니다.");
-                                                Log.w(TAG, "Error writing document", e);
-                                            }
-                                        });
+            } else{ // 프로필 사진이 있을경우 같이 보냄
+                try {
+                    InputStream stream = new FileInputStream(new File(returnPath));
+                    UploadTask uploadTask = mountainImagesRef.putStream(stream);
+                    uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                        @Override
+                        public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                            if (!task.isSuccessful()) {
+                                throw task.getException();
                             }
-                        } else {
-                            Log.e("로그", "실패");
+                            return mountainImagesRef.getDownloadUrl();
                         }
-                    }
-                });
-            } catch (FileNotFoundException e) {
-                Log.e("업로드 로그 ", "에러 : " + e.toString());
+                    }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Uri> task) { // 내장 경로인 returnPath의 사진이 Firebase Storage에 업로드 완료 후 메소드
+                            if (task.isSuccessful()) {
+                                Uri downloadUri = task.getResult(); // 해당 URL 경로를 가져옴
+                                MemberInfo memberInfo = new MemberInfo(name, phone, date, address, downloadUri.toString()); // 이름, 전화번호, 생년월일, 주소, 프로필 사진 경로(firebase URL) 정보 보냄
+                                firebaseUploader(memberInfo); // 해당 정보를 FIrebase DB에 저장
+                                Log.e(TAG, "이미지 업로드 성공 : " + downloadUri);
+                            } else {
+                                Log.e(TAG, "이미지 업로드 실패");
+                            }
+                        }
+                    });
+                } catch (FileNotFoundException e) { // 파일 경로 오류
+                    Log.e(TAG, "업로드 에러 : " + e.toString());
+                }
             }
-        } else {
+        } else { // 입력 칸 확인 로직 오류
             startToast("회원정보를 입력해주세요");
         }
     }
 
-    private void gotoCamera() {
+    private void firebaseUploader(MemberInfo memberInfo) { // Firebase DB Uploader 메소드 실행
+        FirebaseFirestore db = FirebaseFirestore.getInstance(); // Cloud Firestore (NoSQL) 초기화
+        if (user != null) {
+            db.collection("users").document(user.getUid()).set(memberInfo)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            startToast("회원정보 등록을 성공하였습니다.");
+                            Log.d(TAG, "Firebase DB 등록 성공");
+                            finish();
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            startToast("회원정보 등록에 실패하였습니다.");
+                            Log.w(TAG, "Firebase DB 등록 실패 : ", e);
+                        }
+                    });
+        }
+    }
+
+    private void gotoCamera() { // 프로필 사진 촬영 인텐트 실행 메소드
         Intent intent = new Intent(this, CameraActivity.class);
         startActivityForResult(intent, 0);
+    }
+
+    private void gotoGallery() {
+        Intent intent = new Intent(this, GalleryActivity.class);
+        startActivity(intent);
     }
 
     private void startToast(String msg) {

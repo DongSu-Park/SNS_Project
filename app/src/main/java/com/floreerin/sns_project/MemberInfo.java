@@ -15,6 +15,13 @@ public class MemberInfo { // 커스텀 객체 생성
         this.photoUrl = photoUrl;
     }
 
+    public MemberInfo(String name, String phone, String date, String address) {
+        this.name = name;
+        this.phone = phone;
+        this.date = date;
+        this.address = address;
+    }
+
     public String getName() {
         return name;
     }

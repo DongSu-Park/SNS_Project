@@ -13,7 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -30,11 +30,12 @@
                     android:host="google.com" />
             </intent-filter>
         </activity>
-        <activity android:name=".LoginActivity"/>
-        <activity android:name=".SignUpActivity"/>
-        <activity android:name=".Password_ResetActivity"/>
-        <activity android:name=".MemberInitActivity"/>
-        <activity android:name=".CameraActivity"/>
+        <activity android:name=".activity.LoginActivity"/>
+        <activity android:name=".activity.SignUpActivity"/>
+        <activity android:name=".activity.Password_ResetActivity"/>
+        <activity android:name=".activity.MemberInitActivity"/>
+        <activity android:name=".activity.CameraActivity"/>
+        <activity android:name=".activity.GalleryActivity"/>
     </application>
 
 </manifest>
