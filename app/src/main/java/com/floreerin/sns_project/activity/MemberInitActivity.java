@@ -1,6 +1,9 @@
 package com.floreerin.sns_project.activity;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.ImageDecoder;
 import android.graphics.Matrix;
@@ -17,6 +20,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.floreerin.sns_project.MemberInfo;
 import com.floreerin.sns_project.R;
@@ -77,13 +82,40 @@ public class MemberInitActivity extends AppCompatActivity {
                     gotoCamera();
                     break;
                 case R.id.btn_gallery:
-                    gotoGallery();
+                    // READ_EXTERNAL_STORAGE 권한 요청
+                    if (ContextCompat.checkSelfPermission(MemberInitActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(MemberInitActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                            ActivityCompat.requestPermissions(MemberInitActivity.this,
+                                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                    1);
+                        } else {
+                            ActivityCompat.requestPermissions(MemberInitActivity.this,
+                                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                    1);
+                            startToast("권한을 허용해 주세요");
+                        }
+                    } else {
+                        // 권한을 이미 얻었을 경우
+                        gotoGallery();
+                    }
                     break;
             }
         }
     };
 
-
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    gotoGallery();
+                } else {
+                    startToast("권한을 허용해 주세요");
+                }
+            }
+        }
+    }
 
     @Override
     public void onBackPressed() { // 뒤로가기 버튼 누를 시

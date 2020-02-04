@@ -20,7 +20,7 @@ public class GalleryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
 
-        recyclerView = (RecyclerView) findViewById(R.id.recycler_gallery);
+        recyclerView = findViewById(R.id.recycler_gallery);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
